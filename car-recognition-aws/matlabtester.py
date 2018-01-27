@@ -172,7 +172,7 @@ def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--process_data', 
-        help='Divides the whole data set from Stanford (http://ai.stanford.edu/~jkrause/cars/car_dataset.html) into test and validation sets', action='store_const', const=False)
+        help='Divides the whole data set from Stanford (http://ai.stanford.edu/~jkrause/cars/car_dataset.html) into test and validation sets', action='store_true')
         
     parser.add_argument('--car_ims_dir', type=str, 
         help='Directory where all pictures are located or where subfolder train/val are located', default='~/car_ims')
