@@ -119,6 +119,7 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     
     plt.plot(history.history['val_acc'], 'r')
     plt.plot(history.history['acc'], 'b')
+    
     plt.savefig(savedModelName + '_initialModel_plot.png')
     
     serializeModel(model, savedModelName + "_initialModel")
