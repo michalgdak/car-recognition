@@ -42,11 +42,11 @@ def dataPreprocessing(dataDir, labelsFile):
     for recData in data:
         if recData[2] == 1:
             #validation set
-            os.makedirs(dataDir + "\\" + val_data_dir + "\\" + classes[recData[1] - 1] + "\\", exist_ok=True)
-            sh.move(dataDir + recData[0][8:], dataDir + "\\" + val_data_dir + "\\" + classes[recData[1] - 1] + "\\" + recData[0][8:])
+            os.makedirs(dataDir + "/" + val_data_dir + "/" + classes[recData[1] - 1] + "/", exist_ok=True)
+            sh.move(dataDir + recData[0][8:], dataDir + "/" + val_data_dir + "/" + classes[recData[1] - 1] + "/" + recData[0][8:])
         else:
-            os.makedirs(dataDir + "\\" + train_data_dir + "\\" + classes[recData[1] - 1] + "\\", exist_ok=True)
-            sh.move(dataDir + recData[0][8:], dataDir + "\\" + train_data_dir + "\\" + classes[recData[1] - 1] + "\\" + recData[0][8:]) #train set
+            os.makedirs(dataDir + "/" + train_data_dir + "/" + classes[recData[1] - 1] + "/", exist_ok=True)
+            sh.move(dataDir + recData[0][8:], dataDir + "/" + train_data_dir + "/" + classes[recData[1] - 1] + "/" + recData[0][8:]) #train set
 
 #serializes the trained model and its weights
 def serializeModel(model, fileName):
@@ -76,14 +76,14 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     # subfolers of 'car_ims_dir/train', and indefinitely generate
     # batches of augmented image data
     train_generator = train_datagen.flow_from_directory(
-        srcImagesDir + "\\" + train_data_dir + "\\", # this is the target directory
+        srcImagesDir + "/" + train_data_dir + "/", # this is the target directory
         target_size=(299, 299), # all images will be resized to 299x299
         batch_size=batchSize, 
         class_mode='categorical') # since we use categorical_crossentropy loss, we need categorical labels
    
     # this is a similar generator, for validation data
     validation_generator = test_datagen.flow_from_directory(
-        srcImagesDir + "\\" + val_data_dir + "\\", 
+        srcImagesDir + "/" + val_data_dir + "/", 
         target_size=(299, 299), 
         batch_size=batchSize, 
         class_mode='categorical')
