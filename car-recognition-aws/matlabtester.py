@@ -166,13 +166,25 @@ def main(args):
           args.saved_model_name,
           args.car_ims_dir, 
           args.car_ims_labels)
+
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
     
 def parse_arguments(argv):
     
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--process_data', 
-        help='Divides the whole data set from Stanford (http://ai.stanford.edu/~jkrause/cars/car_dataset.html) into test and validation sets', action='store_true')
+        help='Divides the whole data set from Stanford (http://ai.stanford.edu/~jkrause/cars/car_dataset.html) into test and validation sets',
+        type=str2bool, 
+        nargs='?',
+        const=True, 
+        default=True)
         
     parser.add_argument('--car_ims_dir', type=str, 
         help='Directory where all pictures are located or where subfolder train/val are located', default='~/car_ims')
