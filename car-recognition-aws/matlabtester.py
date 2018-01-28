@@ -10,12 +10,13 @@ import sys
 from pprint import pprint
 import scipy.io as sio
 from keras.preprocessing.image import ImageDataGenerator
-from keras.layers import Dense, GlobalAveragePooling2D
+from keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from keras.models import Model
 import shutil as sh
 from keras.applications.inception_v3 import InceptionV3
 from keras.optimizers import SGD
 from matplotlib import pyplot as plt
+from keras import regularizers
 
 train_data_dir = 'train'
 val_data_dir = 'val'
@@ -95,9 +96,11 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
     # let's add a fully-connected layer
-    x = Dense(1024, activation='relu')(x)
+    x = Dense(1024, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
+    # add Dropout regularizer
+    x.add(Dropout(0.5))
     # and a logistic layer with all car classes
-    predictions = Dense(len(classes), activation='softmax')(x)
+    predictions = Dense(len(classes), activation='softmax', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
     
     # this is the model we will train
     model = Model(inputs=base_model.input, outputs=predictions)
