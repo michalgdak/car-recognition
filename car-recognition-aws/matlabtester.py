@@ -98,7 +98,7 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     # let's add a fully-connected layer
     x = Dense(1024, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
     # add Dropout regularizer
-    x.add(Dropout(0.5))
+    x = Dropout(0.5)(x)
     # and a logistic layer with all car classes
     predictions = Dense(len(classes), activation='softmax', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
     
