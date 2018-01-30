@@ -97,7 +97,7 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
     # let's add a fully-connected layer
-    x = Dense(512, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
+    x = Dense(1024, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
     # add Dropout regularizer
     x = Dropout(0.5)(x)
     # and a logistic layer with all car classes
