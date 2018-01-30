@@ -19,6 +19,8 @@ from keras.applications.vgg19 import VGG19
 from keras.optimizers import SGD
 from matplotlib import pyplot as plt
 from keras import regularizers
+from keras.layers.core import Flatten
+from keras.layers.normalization import BatchNormalization
 
 train_data_dir = 'train'
 val_data_dir = 'val'
@@ -92,15 +94,25 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
         class_mode='categorical')
 
     # create the base pre-trained model
-    base_model = VGG19(weights='imagenet', include_top=False)
-    
+    base_model = VGG19(weights='imagenet', include_top=False)#, pooling='avg')
+    #base_model.add(Flatten())
     # add a global spatial average pooling layer
-    x = base_model.output
-    x = GlobalAveragePooling2D()(x)
-    # let's add a fully-connected layer
-    x = Dense(512, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
-    # add Dropout regularizer
+    #x = base_model.output
+    #VGG19
+    base_model.summary()
+    x = Flatten()(base_model.output)
+    x = Dense(4096, activation='relu')(x)
     x = Dropout(0.5)(x)
+    x = Dense(4096, activation='relu')(x)
+    x = Dropout(0.5)(x)
+    x = BatchNormalization()(x)
+
+    # InceptionV3, DenseNet
+    #x = GlobalAveragePooling2D()(x)
+    # let's add a fully-connected layer
+    #x = Dense(512, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
+    # add Dropout regularizer
+    # x = Dropout(0.5)(x)
     # and a logistic layer with all car classes
     predictions = Dense(len(classes), activation='softmax', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
     
@@ -114,7 +126,7 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     
     # compile the model (should be done *after* setting layers to non-trainable)
     model.compile(optimizer=optimazerLastLayer, loss='categorical_crossentropy', metrics=['accuracy'])
-
+    model.summary()
     history = model.fit_generator(
         train_generator,
         steps_per_epoch=nb_train_samples // batchSize,
@@ -164,6 +176,8 @@ def main(args):
     if args.process_data:
         dataPreprocessing(args.car_ims_dir, args.car_ims_labels)
     
+    #base_model = VGG19(weights='imagenet', include_top=True)
+    #base_model.summary()
     model(args.learning_rate, 
           args.optimizer_last_layer, 
           args.no_of_epochs, 
