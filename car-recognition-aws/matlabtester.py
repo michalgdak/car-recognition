@@ -79,14 +79,14 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     # batches of augmented image data
     train_generator = train_datagen.flow_from_directory(
         srcImagesDir + "/" + train_data_dir + "/", # this is the target directory
-        target_size=(299, 299), # all images will be resized to 299x299
+        target_size=(224, 224), # all images will be resized to 299x299
         batch_size=batchSize, 
         class_mode='categorical') # since we use categorical_crossentropy loss, we need categorical labels
    
     # this is a similar generator, for validation data
     validation_generator = test_datagen.flow_from_directory(
         srcImagesDir + "/" + val_data_dir + "/", 
-        target_size=(299, 299), 
+        target_size=(224, 224), 
         batch_size=batchSize, 
         class_mode='categorical')
 
