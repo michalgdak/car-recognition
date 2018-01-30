@@ -15,6 +15,7 @@ from keras.models import Model
 import shutil as sh
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.densenet import DenseNet121
+from keras.applications.vgg19 import VGG19
 from keras.optimizers import SGD
 from matplotlib import pyplot as plt
 from keras import regularizers
@@ -91,13 +92,13 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
         class_mode='categorical')
 
     # create the base pre-trained model
-    base_model = DenseNet121(weights='imagenet', include_top=False)
+    base_model = VGG19(weights='imagenet', include_top=False)
     
     # add a global spatial average pooling layer
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
     # let's add a fully-connected layer
-    x = Dense(1024, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
+    x = Dense(512, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
     # add Dropout regularizer
     x = Dropout(0.5)(x)
     # and a logistic layer with all car classes
@@ -108,8 +109,8 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     
     # first: train only the top layers (which were randomly initialized)
     # i.e. freeze all convolutional InceptionV3 layers
-    for layer in base_model.layers:
-        layer.trainable = False
+    #for layer in base_model.layers:
+    #    layer.trainable = False
     
     # compile the model (should be done *after* setting layers to non-trainable)
     model.compile(optimizer=optimazerLastLayer, loss='categorical_crossentropy', metrics=['accuracy'])
