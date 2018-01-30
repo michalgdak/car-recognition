@@ -130,10 +130,10 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     
     # we chose to train the top 2 inception blocks, i.e. we will freeze
     # the first 249 layers and unfreeze the rest:
-    for layer in model.layers[:313]:
-       layer.trainable = False
-    for layer in model.layers[313:]:
-       layer.trainable = True
+    #for layer in model.layers[:313]:
+    #   layer.trainable = False
+    #for layer in model.layers[313:]:
+    #   layer.trainable = True
     
     # we need to recompile the model for these modifications to take effect
     # we use SGD with a low learning rate
