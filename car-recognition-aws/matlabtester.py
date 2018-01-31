@@ -16,6 +16,7 @@ import shutil as sh
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.densenet import DenseNet121
 from keras.applications.vgg19 import VGG19
+from keras.applications.vgg16 import VGG16
 from keras.optimizers import SGD
 from matplotlib import pyplot as plt
 from keras import regularizers
@@ -94,17 +95,17 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
         class_mode='categorical')
 
     # create the base pre-trained model
-    base_model = VGG19(weights='imagenet', include_top=False)#, pooling='avg')
+    base_model = VGG19(weights='imagenet', include_top=False, input_shape=(224,224,3))#, pooling='avg')
     #base_model.add(Flatten())
     # add a global spatial average pooling layer
     #x = base_model.output
     #VGG19
-    base_model.summary()
+    #base_model.summary()
     x = Flatten()(base_model.output)
     x = Dense(4096, activation='relu')(x)
-    x = Dropout(0.5)(x)
+    x = Dropout(0.2)(x)
     x = Dense(4096, activation='relu')(x)
-    x = Dropout(0.5)(x)
+    x = Dropout(0.2)(x)
     x = BatchNormalization()(x)
 
     # InceptionV3, DenseNet
@@ -176,8 +177,7 @@ def main(args):
     if args.process_data:
         dataPreprocessing(args.car_ims_dir, args.car_ims_labels)
     
-    #base_model = VGG19(weights='imagenet', include_top=True)
-    #base_model.summary()
+
     model(args.learning_rate, 
           args.optimizer_last_layer, 
           args.no_of_epochs, 
