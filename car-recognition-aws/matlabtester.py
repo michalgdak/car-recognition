@@ -22,6 +22,7 @@ from matplotlib import pyplot as plt
 from keras import regularizers
 from keras.layers.core import Flatten
 from keras.layers.normalization import BatchNormalization
+from keras import backend as K
 
 train_data_dir = 'train'
 val_data_dir = 'val'
@@ -96,17 +97,21 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
 
     # create the base pre-trained model
     base_model = VGG19(weights='imagenet', include_top=False, input_shape=(224,224,3))#, pooling='avg')
+    for i, layer in enumerate(base_model.layers):
+        layer.trainable = False
+   
     #base_model.add(Flatten())
     # add a global spatial average pooling layer
     #x = base_model.output
     #VGG19
-    #base_model.summary()
     x = Flatten()(base_model.output)
     x = Dense(4096, activation='relu')(x)
-    x = Dropout(0.2)(x)
-    x = Dense(4096, activation='relu')(x)
-    x = Dropout(0.2)(x)
     x = BatchNormalization()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(4096, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(0.5)(x)
+    
 
     # InceptionV3, DenseNet
     #x = GlobalAveragePooling2D()(x)
@@ -115,7 +120,7 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     # add Dropout regularizer
     # x = Dropout(0.5)(x)
     # and a logistic layer with all car classes
-    predictions = Dense(len(classes), activation='softmax', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
+    predictions = Dense(len(classes), activation='softmax', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01), name='predictions')(x)
     
     # this is the model we will train
     model = Model(inputs=base_model.input, outputs=predictions)
@@ -177,6 +182,7 @@ def main(args):
     if args.process_data:
         dataPreprocessing(args.car_ims_dir, args.car_ims_labels)
     
+    K.clear_session()
 
     model(args.learning_rate, 
           args.optimizer_last_layer, 
