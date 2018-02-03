@@ -96,7 +96,7 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
         class_mode='categorical')
 
     # create the base pre-trained model
-    base_model = VGG19(weights='imagenet', include_top=False, input_shape=(224,224,3))#, pooling='avg')
+    base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224,224,3))#, pooling='avg')
     for i, layer in enumerate(base_model.layers):
         layer.trainable = False
    
