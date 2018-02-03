@@ -166,10 +166,9 @@ def getInceptionV3Architecture(classes, dropoutRate):
     
     # this is the model we will train
     model = Model(inputs=base_model.input, outputs=predictions)
-    for i, layer in enumerate(base_model.layers):
-        print(i, layer.name)
+
     for layer in enumerate(base_model.layers):
-        layer.trainable = False
+        layer[1].trainable = False
     
     return model
 
