@@ -96,8 +96,8 @@ def prepareDataGenerators(batchSize, srcImagesDir, labelsFile):
 def getVGG16Architecture(classes, dropoutRate):
     # create the base pre-trained model
     base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-    for layer in enumerate(base_model.layers):
-        layer[1].trainable = False
+    #for layer in enumerate(base_model.layers):
+    #    layer[1].trainable = False
     
     #flatten the results from conv block
     x = Flatten()(base_model.output)
@@ -175,21 +175,21 @@ def getInceptionV3Architecture(classes, dropoutRate):
 
 def setLayersToRetrain(model, modelArchitecture):
     
-    if modelArchitecture == InceptionV3:
+    if modelArchitecture == 'InceptionV3':
         # we chose to train the top 2 inception blocks, i.e. we will freeze
         # the first 249 layers and unfreeze the rest:
         for layer in model.layers[:249]:
-            layer[1].trainable = False
-        
-        for layer in model.layers[249:]:
-            layer[1].trainable = True
-    elif modelArchitecture == 'VGG16':
-        #train the last conv block
-        for layer in model.layers[:15]:
             layer.trainable = False
         
-        for layer in model.layers[15:]:
+        for layer in model.layers[249:]:
             layer.trainable = True
+    elif modelArchitecture == 'VGG16':
+        #train the last conv block
+        #for layer in model.layers[:15]:
+         #   layer.trainable = False
+        
+        #for layer in model.layers[15:]:
+         #   layer.trainable = True
     elif modelArchitecture == 'VGG19':
         #train the last conv block
         for layer in model.layers[:17]:
