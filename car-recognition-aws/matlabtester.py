@@ -97,7 +97,7 @@ def getVGG16Architecture(classes, dropoutRate):
     # create the base pre-trained model
     base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
     for layer in enumerate(base_model.layers):
-        layer.trainable = False
+        layer[1].trainable = False
     
     #flatten the results from conv block
     x = Flatten()(base_model.output)
@@ -124,7 +124,7 @@ def getVGG19Architecture(classes, dropoutRate):
     # create the base pre-trained model
     base_model = VGG19(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
     for layer in enumerate(base_model.layers):
-        layer.trainable = False
+        layer[1].trainable = False
     
     #flatten the results from conv block
     x = Flatten()(base_model.output)
@@ -179,24 +179,24 @@ def setLayersToRetrain(model, modelArchitecture):
         # we chose to train the top 2 inception blocks, i.e. we will freeze
         # the first 249 layers and unfreeze the rest:
         for layer in model.layers[:249]:
-            layer.trainable = False
+            layer[1].trainable = False
         
         for layer in model.layers[249:]:
-            layer.trainable = True
+            layer[1].trainable = True
     elif modelArchitecture == 'VGG16':
         #train the last conv block
         for layer in model.layers[:15]:
-            layer.trainable = False
+            layer[1].trainable = False
         
         for layer in model.layers[15:]:
-            layer.trainable = True
+            layer[1].trainable = True
     elif modelArchitecture == 'VGG19':
         #train the last conv block
         for layer in model.layers[:17]:
-            layer.trainable = False
+            layer[1].trainable = False
         
         for layer in model.layers[17:]:
-            layer.trainable = True
+            layer[1].trainable = True
         
 
 
