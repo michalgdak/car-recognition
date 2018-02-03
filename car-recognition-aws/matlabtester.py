@@ -150,8 +150,6 @@ def getVGG19Architecture(classes, dropoutRate):
 def getInceptionV3Architecture(classes, dropoutRate):
     # create the base pre-trained model
     base_model = InceptionV3(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-    for layer in enumerate(base_model.layers):
-        layer.trainable = False
     
     # InceptionV3
     x = base_model.output
@@ -168,6 +166,8 @@ def getInceptionV3Architecture(classes, dropoutRate):
     
     # this is the model we will train
     model = Model(inputs=base_model.input, outputs=predictions)
+    for layer in enumerate(base_model.layers):
+        layer.trainable = False
     
     return model
 
