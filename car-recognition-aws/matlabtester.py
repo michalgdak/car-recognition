@@ -64,118 +64,192 @@ def serializeModel(model, fileName):
     model.save_weights(fileName + ".h5")
     print("Saved model to disk")
 
-def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelName, srcImagesDir, labelsFile):
-    
+
+def prepareDataGenerators(batchSize, srcImagesDir, labelsFile):
     classes = readClasses(labelsFile)
-    
-    # this is the augmentation configuration used for training
+# this is the augmentation configuration used for training
     train_datagen = ImageDataGenerator(
         rescale=1. / 255, 
         shear_range=0.2, 
         zoom_range=0.2, 
         horizontal_flip=True)
-    
-    # this is the augmentation configuration used for testing:
-    # only rescaling
+# this is the augmentation configuration used for testing:
+# only rescaling
     test_datagen = ImageDataGenerator(rescale=1. / 255)
-    
-    # this is a generator that will read pictures found in
-    # subfolers of 'car_ims_dir/train', and indefinitely generate
-    # batches of augmented image data
+# this is a generator that will read pictures found in
+# subfolers of 'car_ims_dir/train', and indefinitely generate
+# batches of augmented image data
     train_generator = train_datagen.flow_from_directory(
         srcImagesDir + "/" + train_data_dir + "/", # this is the target directory
         target_size=(224, 224), # all images will be resized to 299x299
         batch_size=batchSize, 
         class_mode='categorical') # since we use categorical_crossentropy loss, we need categorical labels
-   
-    # this is a similar generator, for validation data
+# this is a similar generator, for validation data
     validation_generator = test_datagen.flow_from_directory(
         srcImagesDir + "/" + val_data_dir + "/", 
         target_size=(224, 224), 
         batch_size=batchSize, 
         class_mode='categorical')
+    return classes, train_generator, validation_generator
 
+
+def getVGG16Architecture(classes, dropoutRate):
     # create the base pre-trained model
-    base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224,224,3))#, pooling='avg')
-    for i, layer in enumerate(base_model.layers):
+    base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+    for layer in enumerate(base_model.layers):
         layer.trainable = False
-   
-    #base_model.add(Flatten())
-    # add a global spatial average pooling layer
-    #x = base_model.output
-    #VGG19
-    x = Flatten()(base_model.output)
-    x = Dense(4096, activation='relu')(x)
-    x = BatchNormalization()(x)
-    x = Dropout(0.5)(x)
-    x = Dense(4096, activation='relu')(x)
-    x = BatchNormalization()(x)
-    x = Dropout(0.5)(x)
     
+    #flatten the results from conv block
+    x = Flatten()(base_model.output)
+    
+    #add another fully connected layers with batch norm and dropout
+    x = Dense(4096, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropoutRate)(x)
+    
+    #add another fully connected layers with batch norm and dropout
+    x = Dense(4096, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropoutRate)(x)
 
-    # InceptionV3, DenseNet
-    #x = GlobalAveragePooling2D()(x)
+    #add logistic layer with all car classes
+    predictions = Dense(len(classes), activation='softmax', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01), name='predictions')(x)
+    
+    # this is the model we will train
+    model = Model(inputs=base_model.input, outputs=predictions)
+    
+    return model
+
+def getVGG19Architecture(classes, dropoutRate):
+    # create the base pre-trained model
+    base_model = VGG19(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+    for layer in enumerate(base_model.layers):
+        layer.trainable = False
+    
+    #flatten the results from conv block
+    x = Flatten()(base_model.output)
+    
+    #add another fully connected layers with batch norm and dropout
+    x = Dense(4096, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropoutRate)(x)
+    
+    #add another fully connected layers with batch norm and dropout
+    x = Dense(4096, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropoutRate)(x)
+
+    #add logistic layer with all car classes
+    predictions = Dense(len(classes), activation='softmax', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01), name='predictions')(x)
+    
+    # this is the model we will train
+    model = Model(inputs=base_model.input, outputs=predictions)
+    
+    return model
+
+def getInceptionV3Architecture(classes, dropoutRate):
+    # create the base pre-trained model
+    base_model = InceptionV3(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+    for layer in enumerate(base_model.layers):
+        layer.trainable = False
+    
+    # InceptionV3
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    
     # let's add a fully-connected layer
-    #x = Dense(512, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
+    x = Dense(512, activation='relu', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01))(x)
+    
     # add Dropout regularizer
-    # x = Dropout(0.5)(x)
+    x = Dropout(dropoutRate)(x)
+    
     # and a logistic layer with all car classes
     predictions = Dense(len(classes), activation='softmax', kernel_initializer='random_uniform', bias_initializer='random_uniform', bias_regularizer=regularizers.l2(0.01), name='predictions')(x)
     
     # this is the model we will train
     model = Model(inputs=base_model.input, outputs=predictions)
     
-    # first: train only the top layers (which were randomly initialized)
-    # i.e. freeze all convolutional InceptionV3 layers
-    #for layer in base_model.layers:
-    #    layer.trainable = False
+    return model
+
+
+def setLayersToRetrain(model, modelArchitecture):
     
-    # compile the model (should be done *after* setting layers to non-trainable)
+    if modelArchitecture == InceptionV3:
+        # we chose to train the top 2 inception blocks, i.e. we will freeze
+        # the first 249 layers and unfreeze the rest:
+        for layer in model.layers[:249]:
+            layer.trainable = False
+        
+        for layer in model.layers[249:]:
+            layer.trainable = True
+    elif modelArchitecture == 'VGG16':
+        #train the last conv block
+        for layer in model.layers[:15]:
+            layer.trainable = False
+        
+        for layer in model.layers[15:]:
+            layer.trainable = True
+    elif modelArchitecture == 'VGG19':
+        #train the last conv block
+        for layer in model.layers[:17]:
+            layer.trainable = False
+        
+        for layer in model.layers[17:]:
+            layer.trainable = True
+        
+
+
+def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model):
+    # compile the model and train the top layer only
     model.compile(optimizer=optimazerLastLayer, loss='categorical_crossentropy', metrics=['accuracy'])
     model.summary()
     history = model.fit_generator(
-        train_generator,
-        steps_per_epoch=nb_train_samples // batchSize,
-        epochs=noOfEpochs,
-        validation_data=validation_generator,
+        train_generator, 
+        steps_per_epoch=nb_train_samples // batchSize, 
+        epochs=noOfEpochs, 
+        validation_data=validation_generator, 
         validation_steps=nb_val_samples // batchSize)
-    
     plt.plot(history.history['val_acc'], 'r')
     plt.plot(history.history['acc'], 'b')
-    
     plt.savefig(savedModelName + '_initialModel_plot.png')
-    
     serializeModel(model, savedModelName + "_initialModel")
-    
-    # we chose to train the top 2 inception blocks, i.e. we will freeze
-    # the first 249 layers and unfreeze the rest:
-    #for layer in model.layers[:313]:
-    #   layer.trainable = False
-    #for layer in model.layers[313:]:
-    #   layer.trainable = True
-    
-    # we need to recompile the model for these modifications to take effect
-    # we use SGD with a low learning rate
 
-    model.compile(optimizer=SGD(lr=learningRate, momentum=0.9), 
-                  loss='categorical_crossentropy', 
-                  metrics=['accuracy'])
-    
-    # we train our model again (this time fine-tuning the top 2 inception blocks
-    # alongside the top Dense layers
+
+def finetuningTraining(learningRate, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model):
+    # we need to recompile the model for these modifications to take effect
+# we use SGD with a low learning rate
+    model.compile(optimizer=SGD(lr=learningRate, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
+# we train our model again (this time fine-tuning the top 2 inception blocks
+# alongside the top Dense layers
     history = model.fit_generator(
-        train_generator,
-        steps_per_epoch=nb_train_samples // batchSize,
-        epochs=noOfEpochs,
-        validation_data=validation_generator,
+        train_generator, 
+        steps_per_epoch=nb_train_samples // batchSize, 
+        epochs=noOfEpochs, 
+        validation_data=validation_generator, 
         validation_steps=nb_val_samples // batchSize)
-    
     plt.clf()
     plt.plot(history.history['val_acc'], 'r')
     plt.plot(history.history['acc'], 'b')
     plt.savefig(savedModelName + '_finalModel_plot.png')
-    
     serializeModel(model, savedModelName + "_finalModel")
+
+
+def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelName, srcImagesDir, labelsFile, modelArchitecture, dropoutRate):
+    
+    classes, train_generator, validation_generator = prepareDataGenerators(batchSize, srcImagesDir, labelsFile)
+
+    if modelArchitecture == 'VGG16':
+        model = getVGG16Architecture(classes, dropoutRate)
+    elif modelArchitecture == 'VGG19':
+        model = getVGG19Architecture(classes, dropoutRate)
+    else:
+        model = getInceptionV3Architecture(classes, dropoutRate)
+    
+    initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model)
+    
+    setLayersToRetrain(model, modelArchitecture)
+    
+    finetuningTraining(learningRate, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model)
 
 def main(args):
     pprint(args)
@@ -190,7 +264,9 @@ def main(args):
           args.batch_size, 
           args.saved_model_name,
           args.car_ims_dir, 
-          args.car_ims_labels)
+          args.car_ims_labels,
+          args.model,
+          args.dropout_rate)
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -209,26 +285,31 @@ def parse_arguments(argv):
         type=str2bool, 
         nargs='?',
         const=True, 
-        default=True)
+        default=False)
         
     parser.add_argument('--car_ims_dir', type=str, 
-        help='Directory where all pictures are located or where subfolder train/val are located', default='~/car_ims')
+        help='Directory where all pictures are located or where subfolder train/val are located', default='./car_ims')
 
     parser.add_argument('--car_ims_labels', type=str, 
-        help='Points to the file with all labels', default='~/cars_annos.mat')    
+        help='Points to the file with all labels', default='./cars_annos.mat')    
 
     parser.add_argument('--learning_rate', type=float,
-        help='Initial learning rate. If set to a negative value a learning rate ' +
-        'schedule can be specified in the file "learning_rate_schedule.txt"', default=0.0001)
+        help='Initial learning rate.', default=0.0001)
+    
+    parser.add_argument('--dropout_rate', type=float,
+        help='Fraction of the input units to drop.', default=0.5)
     
     parser.add_argument('--optimizer_last_layer', type=str, choices=['ADAGRAD', 'ADADELTA', 'ADAM', 'RMSPROP', 'MOM'],
         help='The optimization algorithm to use', default='RMSPROP')
 
+    parser.add_argument('--model', type=str, choices=['VGG19', 'VGG16', 'InceptionV3'],
+        help='The optimization algorithm to use', default='VGG16')
+
     parser.add_argument('--no_of_epochs', type=int,
-        help='Number of epochs to run.', default=500)
+        help='Number of epochs to run.', default=25)
 
     parser.add_argument('--batch_size', type=int,
-        help='Number of images to process in a batch.', default=128)
+        help='Number of images to process in a batch.', default=64)
     
     parser.add_argument('--saved_model_name', type=str,
         help='Number of images to process in a batch.', default='carRecognition')
