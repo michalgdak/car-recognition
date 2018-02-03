@@ -186,17 +186,17 @@ def setLayersToRetrain(model, modelArchitecture):
     elif modelArchitecture == 'VGG16':
         #train the last conv block
         for layer in model.layers[:15]:
-            layer[1].trainable = False
+            layer.trainable = False
         
         for layer in model.layers[15:]:
-            layer[1].trainable = True
+            layer.trainable = True
     elif modelArchitecture == 'VGG19':
         #train the last conv block
         for layer in model.layers[:17]:
-            layer[1].trainable = False
+            layer.trainable = False
         
         for layer in model.layers[17:]:
-            layer[1].trainable = True
+            layer.trainable = True
         
 
 
