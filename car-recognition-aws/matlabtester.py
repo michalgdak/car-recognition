@@ -102,8 +102,8 @@ def prepareDataGenerators(batchSize, srcImagesDir, labelsFile):
 def getVGG16Architecture(classes, dropoutRate):
     # create the base pre-trained model
     base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-    #for layer in enumerate(base_model.layers):
-    #    layer[1].trainable = False
+    for layer in enumerate(base_model.layers):
+        layer[1].trainable = False
     
     #flatten the results from conv block
     x = Flatten()(base_model.output)
@@ -191,8 +191,8 @@ def setLayersToRetrain(model, modelArchitecture):
             layer.trainable = True
     elif modelArchitecture == 'VGG16':
         #train the last conv block
-        #for layer in model.layers[:15]:
-         #   layer.trainable = False
+        for layer in model.layers[:15]:
+            layer.trainable = False
         
         for layer in model.layers[15:]:
             layer.trainable = True
