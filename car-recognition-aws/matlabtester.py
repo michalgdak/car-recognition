@@ -206,9 +206,9 @@ def setLayersToRetrain(model, modelArchitecture):
         
 
 
-def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture):
+def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture, lr_decay):
     # compile the model and train the top layer only
-    model.compile(optimizer=optimazerLastLayer, loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=optimazerLastLayer, loss='categorical_crossentropy', metrics=['accuracy'], decay=lr_decay)
     model.summary()
     earlystop = callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=5, mode='auto')
     history = model.fit_generator(
@@ -227,13 +227,14 @@ def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, t
     serializeModel(model, savedModelName + "_initialModel")
 
 
-def finetuningTraining(learningRate, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model):
+def finetuningTraining(learningRate, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, lr_decay):
     # we need to recompile the model for these modifications to take effect
-# we use SGD with a low learning rate
-    model.compile(optimizer=SGD(lr=learningRate, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
+    # we use SGD with a low learning rate
+    model.compile(optimizer=SGD(lr=learningRate, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'], decay=lr_decay)
     earlystop = callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=5, mode='auto')
-# we train our model again (this time fine-tuning the top 2 inception blocks
-# alongside the top Dense layers
+    
+    # we train our model again (this time fine-tuning the top 2 inception blocks
+    # alongside the top Dense layers
     history = model.fit_generator(
         train_generator, 
         steps_per_epoch=nb_train_samples // batchSize, 
@@ -248,7 +249,7 @@ def finetuningTraining(learningRate, noOfEpochs, batchSize, savedModelName, trai
     serializeModel(model, savedModelName + "_finalModel")
 
 
-def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelName, srcImagesDir, labelsFile, modelArchitecture, dropoutRate):
+def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelName, srcImagesDir, labelsFile, modelArchitecture, dropoutRate, lr_decay):
     
     classes, train_generator, validation_generator = prepareDataGenerators(batchSize, srcImagesDir, labelsFile)
 
@@ -259,11 +260,11 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     else:
         model = getInceptionV3Architecture(classes, dropoutRate)
     
-    initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture)
+    initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture, lr_decay)
     
     setLayersToRetrain(model, modelArchitecture)
     
-    finetuningTraining(learningRate, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model)
+    finetuningTraining(learningRate, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, lr_decay)
 
 def main(args):
     pprint(args)
@@ -280,7 +281,8 @@ def main(args):
           args.car_ims_dir, 
           args.car_ims_labels,
           args.model,
-          args.dropout_rate)
+          args.dropout_rate,
+          args.lr_decay)
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -308,10 +310,13 @@ def parse_arguments(argv):
         help='Points to the file with all labels', default='./cars_annos.mat')    
 
     parser.add_argument('--learning_rate', type=float,
-        help='Initial learning rate.', default=0.0001)
+        help='Initial learning rate.', default=0.003)
     
     parser.add_argument('--dropout_rate', type=float,
-        help='Fraction of the input units to drop.', default=0.5)
+        help='Fraction of the input units to drop.', default=0.7)
+
+    parser.add_argument('--lr_decay', type=float,
+        help='Fraction of the input units to drop.', default=0.05)
     
     parser.add_argument('--optimizer_last_layer', type=str, choices=['ADAGRAD', 'ADADELTA', 'ADAM', 'RMSPROP', 'MOM'],
         help='The optimization algorithm to use', default='RMSPROP')
@@ -320,7 +325,7 @@ def parse_arguments(argv):
         help='The optimization algorithm to use', default='VGG16')
 
     parser.add_argument('--no_of_epochs', type=int,
-        help='Number of epochs to run.', default=25)
+        help='Number of epochs to run.', default=50)
 
     parser.add_argument('--batch_size', type=int,
         help='Number of images to process in a batch.', default=64)
