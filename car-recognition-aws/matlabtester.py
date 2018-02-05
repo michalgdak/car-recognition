@@ -206,7 +206,7 @@ def setLayersToRetrain(model, modelArchitecture):
         
 
 
-def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model):
+def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture):
     # compile the model and train the top layer only
     model.compile(optimizer=optimazerLastLayer, loss='categorical_crossentropy', metrics=['accuracy'])
     model.summary()
@@ -220,6 +220,9 @@ def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, t
         callbacks=[earlystop])
     plt.plot(history.history['val_acc'], 'r')
     plt.plot(history.history['acc'], 'b')
+    plt.title('Performance of model ' + modelArchitecture)
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epochs No')
     plt.savefig(savedModelName + '_initialModel_plot.png')
     serializeModel(model, savedModelName + "_initialModel")
 
@@ -256,7 +259,7 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     else:
         model = getInceptionV3Architecture(classes, dropoutRate)
     
-    initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model)
+    initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture)
     
     setLayersToRetrain(model, modelArchitecture)
     
