@@ -19,14 +19,14 @@ def main(args):
     # This would print all the files and directories
     for classDir in topDirs:
         print(classDir)
-        files = os.listdir(args.src_dir + "\\" + classDir)
+        files = os.listdir(args.src_dir + "/" + classDir)
         start = int(len(files)*args.split_ratio)
         random.shuffle(files)
         for j in range(start,0,-1):
-            os.makedirs(args.dst_dir + "\\" + classDir,
+            os.makedirs(args.dst_dir + "/" + classDir,
                         exist_ok=True)
-            sh.move(args.src_dir + "\\" + classDir + "\\" + files[j],
-                    args.dst_dir + "\\" + classDir + "\\" + files[j])
+            sh.move(args.src_dir + "/" + classDir + "/" + files[j],
+                    args.dst_dir + "/" + classDir + "/" + files[j])
 
 def parse_arguments(argv):
     
