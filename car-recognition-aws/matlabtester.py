@@ -23,7 +23,7 @@ from keras.applications.densenet import DenseNet121
 from keras import callbacks
 from keras.applications.vgg19 import VGG19
 from keras.applications.vgg16 import VGG16
-from keras.optimizers import SGD
+from keras.optimizers import SGD, RMSprop
 from matplotlib import pyplot as plt
 from keras import regularizers
 from keras.layers.core import Flatten
@@ -206,9 +206,11 @@ def setLayersToRetrain(model, modelArchitecture):
         
 
 
-def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture, lr_decay):
+def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture, lr_decay, learningRate):
     # compile the model and train the top layer only
-    model.compile(optimizer=optimazerLastLayer, loss='categorical_crossentropy', metrics=['accuracy'], decay=lr_decay)
+    
+    rms = RMSprop(decay=lr_decay, lr=learningRate)
+    model.compile(optimizer=rms, loss='categorical_crossentropy', metrics=['accuracy'])
     model.summary()
     earlystop = callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=5, mode='auto')
     history = model.fit_generator(
@@ -230,7 +232,8 @@ def initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, t
 def finetuningTraining(learningRate, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, lr_decay):
     # we need to recompile the model for these modifications to take effect
     # we use SGD with a low learning rate
-    model.compile(optimizer=SGD(lr=learningRate, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'], decay=lr_decay)
+    sgd = SGD(lr=learningRate, decay=lr_decay, momentum=0.9, nesterov=True)
+    model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
     earlystop = callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=5, mode='auto')
     
     # we train our model again (this time fine-tuning the top 2 inception blocks
@@ -260,7 +263,7 @@ def model(learningRate, optimazerLastLayer, noOfEpochs, batchSize, savedModelNam
     else:
         model = getInceptionV3Architecture(classes, dropoutRate)
     
-    initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture, lr_decay)
+    initialTraining(optimazerLastLayer, noOfEpochs, batchSize, savedModelName, train_generator, validation_generator, model, modelArchitecture, lr_decay, learningRate)
     
     setLayersToRetrain(model, modelArchitecture)
     
