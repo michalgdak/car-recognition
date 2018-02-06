@@ -319,7 +319,7 @@ def parse_arguments(argv):
         help='Fraction of the input units to drop.', default=0.7)
 
     parser.add_argument('--lr_decay', type=float,
-        help='Fraction of the input units to drop.', default=0.05)
+        help='Fraction of the input units to drop.', default=1e-5)
     
     parser.add_argument('--optimizer_last_layer', type=str, choices=['ADAGRAD', 'ADADELTA', 'ADAM', 'RMSPROP', 'MOM'],
         help='The optimization algorithm to use', default='RMSPROP')
