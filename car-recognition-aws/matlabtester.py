@@ -313,13 +313,13 @@ def parse_arguments(argv):
         help='Points to the file with all labels', default='./cars_annos.mat')    
 
     parser.add_argument('--learning_rate', type=float,
-        help='Initial learning rate.', default=0.003)
+        help='Initial learning rate.', default=0.001)
     
     parser.add_argument('--dropout_rate', type=float,
         help='Fraction of the input units to drop.', default=0.7)
 
     parser.add_argument('--lr_decay', type=float,
-        help='Learning rate decay', default=1e-5)
+        help='Learning rate decay', default=1e-4)
     
     parser.add_argument('--optimizer_last_layer', type=str, choices=['ADAGRAD', 'ADADELTA', 'ADAM', 'RMSPROP', 'MOM'],
         help='The optimization algorithm to use', default='RMSPROP')
@@ -328,7 +328,7 @@ def parse_arguments(argv):
         help='The optimization algorithm to use', default='VGG16')
 
     parser.add_argument('--no_of_epochs', type=int,
-        help='Number of epochs to run.', default=50)
+        help='Number of epochs to run.', default=500)
 
     parser.add_argument('--batch_size', type=int,
         help='Number of images to process in a batch.', default=64)
