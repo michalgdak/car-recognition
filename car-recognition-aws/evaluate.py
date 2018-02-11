@@ -55,10 +55,10 @@ def parse_arguments(argv):
         help='Batch size', default=16)
     
     parser.add_argument('--lr_decay', type=float,
-        help='Learning rate decay.', default=1e-5)
+        help='Learning rate decay.', default=1e-4)
     
     parser.add_argument('--learning_rate', type=float,
-        help='Initial learning rate.', default=0.003)
+        help='Initial learning rate.', default=0.001)
     
     return parser.parse_args(argv)
 
