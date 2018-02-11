@@ -37,7 +37,7 @@ def main(args):
     # evaluate loaded model on test data
     sgd = SGD(lr=args.learning_rate, decay=args.lr_decay, momentum=0.9, nesterov=True)
     loaded_model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
-    score = loaded_model.evaluate_generator(test_generator, verbose=0)
+    score = loaded_model.evaluate_generator(test_generator, 3957/args.batch_size, workers=6)
     print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
 
 def parse_arguments(argv):
