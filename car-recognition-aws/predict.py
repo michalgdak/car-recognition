@@ -24,6 +24,8 @@ def main(args):
         batch_size=1, 
         class_mode='categorical')
     
+    pprint(ImageDataGenerator)
+    
     filenames = test_generator.filenames
     nb_samples = len(filenames)
 
