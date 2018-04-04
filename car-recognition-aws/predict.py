@@ -24,6 +24,10 @@ def main(args):
         batch_size=1, 
         class_mode='categorical')
     
+    filenames = test_generator.filenames
+    nb_samples = len(filenames)
+
+    print("nb_samples %.2f%%" % (nb_samples))
 
     # load json and create model
     json_file = open(args.model_name + '.json', 'r')
@@ -37,7 +41,7 @@ def main(args):
     # evaluate loaded model on test data
     sgd = SGD(lr=args.learning_rate, decay=args.lr_decay, momentum=0.9, nesterov=True)
     loaded_model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
-    score = loaded_model.predict_generator(test_generator, steps = args.no_of_samples, workers=1)
+    score = loaded_model.predict_generator(test_generator, steps = nb_samples)
     print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
 
 def parse_arguments(argv):
@@ -50,15 +54,12 @@ def parse_arguments(argv):
         
     parser.add_argument('--model_name', type=str,
         help='Saved model name location', default='./vgg16/tst/vgg16_lr001_dr7_decaye-4_finalModel')
-    
-    parser.add_argument('--no_of_samples', type=int,
-        help='Batch size', default=16)
         
     parser.add_argument('--lr_decay', type=float,
-        help='Learning rate decay.', default=1e-4)
+        help='Learning rate decay.', default=1e-3)
     
     parser.add_argument('--learning_rate', type=float,
-        help='Initial learning rate.', default=0.001)
+        help='Initial learning rate.', default=0.0003)
     
     return parser.parse_args(argv)
 
