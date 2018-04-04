@@ -19,9 +19,9 @@ def main(args):
     
     test_datagen = ImageDataGenerator(rescale=1. / 255)
     test_generator = test_datagen.flow_from_directory(
-        args.test_data, 
+        args.predict_data, 
         target_size=(224, 224), 
-        batch_size=args.batch_size, 
+        batch_size=1, 
         class_mode='categorical')
     
 
@@ -37,7 +37,7 @@ def main(args):
     # evaluate loaded model on test data
     sgd = SGD(lr=args.learning_rate, decay=args.lr_decay, momentum=0.9, nesterov=True)
     loaded_model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
-    score = loaded_model.predict_generator(test_generator, args.no_of_samples/args.batch_size, workers=6)
+    score = loaded_model.predict_generator(test_generator, steps = args.no_of_samples, workers=1)
     print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
 
 def parse_arguments(argv):
@@ -50,9 +50,6 @@ def parse_arguments(argv):
         
     parser.add_argument('--model_name', type=str,
         help='Saved model name location', default='./vgg16/tst/vgg16_lr001_dr7_decaye-4_finalModel')
-    
-    parser.add_argument('--batch_size', type=int,
-        help='Batch size', default=16)
     
     parser.add_argument('--no_of_samples', type=int,
         help='Batch size', default=16)
