@@ -45,7 +45,7 @@ def main(args):
     print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
 
 def parse_arguments(argv):
-    
+    pprint(argv)
     parser = argparse.ArgumentParser()
         
     parser.add_argument('--predict_data', type=str,
