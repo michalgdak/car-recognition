@@ -1,6 +1,11 @@
 # Car classificator
 This is a car classificator build using pretrained VGG16, VGG19 and InceptionV3 on ImageNet data set.
 
+## Requirements
+* Python 3.5.4
+* tensorflow-gpu 1.7.0
+* keras-gpu 2.1.5
+
 ## Getting the data
 The model has been trained on [Cars Dataset from Stanford](http://ai.stanford.edu/~jkrause/cars/car_dataset.html)
 
