@@ -10,6 +10,7 @@ import sys
 from pprint import pprint
 import shutil as sh
 import random
+import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import model_from_json
 from keras.optimizers import SGD, RMSprop
@@ -23,8 +24,6 @@ def main(args):
         target_size=(224, 224), 
         batch_size=1, 
         class_mode='categorical')
-    
-    pprint(ImageDataGenerator)
     
     filenames = test_generator.filenames
     nb_samples = len(filenames)
@@ -44,10 +43,15 @@ def main(args):
     sgd = SGD(lr=args.learning_rate, decay=args.lr_decay, momentum=0.9, nesterov=True)
     loaded_model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
     score = loaded_model.predict_generator(test_generator, steps = nb_samples)
-    print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
+    
+    for i in range(0, nb_samples):
+        idx = np.argmax(score[i])
+        pprint("prediction idx, value %.2f%% %.2f%%" %(idx, score[i][idx]))
+    pprint(loaded_model.metrics_names)
+    #print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
 
 def parse_arguments(argv):
-    pprint(argv)
+    
     parser = argparse.ArgumentParser()
         
     parser.add_argument('--predict_data', type=str,
