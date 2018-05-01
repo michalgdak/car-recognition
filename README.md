@@ -20,3 +20,11 @@ I managed to train VGG16 network with 66,11% accuracy on cross validation data s
 ![alt text](https://github.com/michalgdak/car-recognition/blob/master/car-recognition-aws/VGG16_lr001_dr8_finalModel_plot.png "accuracy over epochs for VGG16")
 
 The more complex model (ex. InceptionV3) the less accurate results are. This is understanable due to bias/variance problem.
+
+## Credits
+
+3D Object Representations for Fine-Grained Categorization
+Jonathan Krause, Michael Stark, Jia Deng, Li Fei-Fei
+4th IEEE Workshop on 3D Representation and Recognition, at ICCV 2013 (3dRR-13). Sydney, Australia. Dec. 8, 2013.
+
+[The Keras Blog, Building powerful image classification models using very little data](https://blog.keras.io/building-powerful-image-classification-models-using-very-little-data.html)
